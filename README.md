@@ -47,3 +47,6 @@ npm run dev
 ### 2. Available Endpoints
 - `GET /api/health` - Health check
 - `POST /api/quiz/generate` - AI Quiz Generation (takes `topic`, `difficulty`, optional `count`)
+- `GET /api/quiz/:id` - Fetch quiz for taking (sanitized: never exposes `correctAnswerIndex`)
+- `POST /api/quiz/:id/submit` - Server-side grading only (takes `answers` array, returns score, percentage, breakdown with explanations, and records attempt history)
+
