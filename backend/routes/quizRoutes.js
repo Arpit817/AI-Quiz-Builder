@@ -5,6 +5,12 @@ const {
   getQuizById,
   submitQuiz,
 } = require('../controllers/quizController');
+const { optionalProtect } = require('../middleware/authMiddleware');
+
+// Apply optional auth to all quiz routes:
+// - Logged-in users get req.user populated (quizzes/attempts linked to their account)
+// - Guests still work fine (req.user = null)
+router.use(optionalProtect);
 
 // POST /api/quiz/generate - Generate quiz questions via LLM
 router.post('/generate', generateQuiz);
@@ -16,4 +22,5 @@ router.get('/:id', getQuizById);
 router.post('/:id/submit', submitQuiz);
 
 module.exports = router;
+
 
