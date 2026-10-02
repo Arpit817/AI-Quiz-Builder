@@ -105,6 +105,6 @@ npm test   # requires mongod running on port 27017
 3. **AI output goes through a validation/repair layer** (`quizValidator.js`) before being saved — handles LLM quirks like letter answers ("A","B"), numeric strings, prefixed options.
 4. **MongoDB connection is graceful** — server starts and quiz generation works even if MongoDB is offline (data just won't persist).
 5. **`server.js` uses `require.main === module` guard** — so the Express app can be imported by tests without starting the HTTP listener.
-6. **`req.user?._id || null` placeholders** exist in `generateQuiz` and `submitQuiz` — they will automatically work once `authMiddleware` is added in Item 4.
+6. **`req.user?._id || null` in `generateQuiz` and `submitQuiz`** — now fully active via `optionalProtect` middleware; logged-in users have their quizzes and attempts automatically linked to their account.
 
 
