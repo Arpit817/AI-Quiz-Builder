@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState, useCallback } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { api } from '../api';
 
@@ -18,58 +18,42 @@ export default function QuizPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
     api.quiz.get(id)
       .then((res) => {
+        if (!isMounted) return;
         setQuiz(res.data);
         setAnswers([]);
         setCurrent(0);
       })
-      .catch((err) => setLoadError(err.message || 'Failed to load quiz.'));
+      .catch((err) => {
+        if (!isMounted) return;
+        setLoadError(err.message || 'Failed to load quiz.');
+      });
+    return () => {
+      isMounted = false;
+    };
   }, [id]);
 
-  if (loadError) {
-    return (
-      <main className="page">
-        <div className="container container--narrow">
-          <div className="alert alert--error">
-            <AlertCircle size={16} style={{ flexShrink: 0 }} />
-            <span>{loadError}</span>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  if (!quiz) {
-    return (
-      <main className="page">
-        <div className="container container--narrow" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '4rem', gap: '1rem' }}>
-          <div className="spinner spinner--lg" role="status" aria-label="Loading quiz" />
-          <span className="font-mono text-muted" style={{ fontSize: '0.8125rem' }}>Loading assessment...</span>
-        </div>
-      </main>
-    );
-  }
-
-  const questions = quiz.questions || [];
+  const questions = quiz?.questions || [];
   const total = questions.length;
   const q = questions[current];
   const currentAnswer = answers.find((a) => a.questionIndex === current);
   const selectedIndex = currentAnswer?.selectedOptionIndex ?? null;
 
-  function selectOption(optionIndex) {
+  const selectOption = useCallback((optionIndex) => {
     if (submitted) return;
     setAnswers((prev) => {
       const filtered = prev.filter((a) => a.questionIndex !== current);
       return [...filtered, { questionIndex: current, selectedOptionIndex: optionIndex }];
     });
-  }
+  }, [submitted, current]);
 
-  function goTo(index) {
+  const goTo = useCallback((index) => {
     if (index >= 0 && index < total) setCurrent(index);
-  }
+  }, [total]);
 
-  async function handleSubmit() {
+  const handleSubmit = useCallback(async () => {
     if (submitting || submitted) return;
     setSubmitError('');
     setSubmitting(true);
@@ -81,10 +65,12 @@ export default function QuizPage() {
     } finally {
       setSubmitting(false);
     }
-  }
+  }, [id, answers, submitted, submitting, navigate]);
 
-  // Keyboard navigation shortcuts
+  // Keyboard navigation shortcuts - must be called unconditionally before any early returns
   useEffect(() => {
+    if (!quiz || !q) return;
+
     function handleKeyDown(e) {
       if (e.ctrlKey || e.altKey || e.metaKey) return;
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target?.tagName)) return;
@@ -114,7 +100,47 @@ export default function QuizPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [current, total, answers, submitted, submitting, q]);
+  }, [quiz, q, current, total, answers, submitting, selectOption, goTo, handleSubmit]);
+
+  if (loadError) {
+    return (
+      <main className="page">
+        <div className="container container--narrow">
+          <div className="alert alert--error">
+            <AlertCircle size={16} style={{ flexShrink: 0 }} />
+            <span>{loadError}</span>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (!quiz) {
+    return (
+      <main className="page">
+        <div className="container container--narrow" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '4rem', gap: '1rem' }}>
+          <div className="spinner spinner--lg" role="status" aria-label="Loading quiz" />
+          <span className="font-mono text-muted" style={{ fontSize: '0.8125rem' }}>Loading assessment...</span>
+        </div>
+      </main>
+    );
+  }
+
+  if (total === 0 || !q) {
+    return (
+      <main className="page">
+        <div className="container container--narrow">
+          <div className="alert alert--error">
+            <AlertCircle size={16} style={{ flexShrink: 0 }} />
+            <span>
+              This quiz has no questions available.{' '}
+              <Link to="/generate" style={{ fontWeight: 600 }}>Generate a new quiz.</Link>
+            </span>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   const answeredCount = answers.length;
   const progressPercent = Math.round(((current + 1) / total) * 100);
@@ -158,11 +184,11 @@ export default function QuizPage() {
                 </div>
 
                 <h2 style={{ fontSize: '1.1875rem', lineHeight: '1.4', marginBottom: '1.5rem', fontWeight: 600 }}>
-                  {q.questionText}
+                  {q?.questionText || 'Question'}
                 </h2>
 
                 <div role="group" aria-label="Answer options">
-                  {q.options.map((opt, i) => (
+                  {(q?.options || []).map((opt, i) => (
                     <button
                       key={i}
                       className={`option-btn${selectedIndex === i ? ' selected' : ''}`}
