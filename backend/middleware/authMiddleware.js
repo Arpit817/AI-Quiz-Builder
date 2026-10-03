@@ -1,5 +1,7 @@
+const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const connectDB = require('../config/db');
 
 /**
  * Authentication Middleware
@@ -38,6 +40,11 @@ const protect = async (req, res, next) => {
         success: false,
         error: 'Invalid token.',
       });
+    }
+
+    // Connect if not already connected
+    if (mongoose.connection.readyState !== 1) {
+      await connectDB();
     }
 
     // 3. Fetch the user from DB (excludes password)
@@ -79,6 +86,9 @@ const optionalProtect = async (req, res, next) => {
 
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      if (mongoose.connection.readyState !== 1) {
+        await connectDB();
+      }
       const user = await User.findById(decoded.id).select('-password');
       req.user = user || null;
     } catch {

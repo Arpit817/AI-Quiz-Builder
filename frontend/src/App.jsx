@@ -11,6 +11,7 @@ import RegisterPage from './pages/RegisterPage';
 import GeneratePage from './pages/GeneratePage';
 import QuizPage from './pages/QuizPage';
 import ResultsPage from './pages/ResultsPage';
+import HistoryPage from './pages/HistoryPage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 
@@ -34,6 +35,14 @@ export default function App() {
                 element={
                   <ProtectedRoute>
                     <GeneratePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/history"
+                element={
+                  <ProtectedRoute>
+                    <HistoryPage />
                   </ProtectedRoute>
                 }
               />

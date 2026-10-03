@@ -42,6 +42,7 @@ export default function Navbar() {
 
           <div className="navbar__nav">
             <Link to="/generate" className="navbar__link">Generate</Link>
+            {user && <Link to="/history" className="navbar__link">History</Link>}
             <button
               type="button"
               className="navbar__link"
@@ -127,6 +128,15 @@ export default function Navbar() {
           >
             Generate Quiz
           </Link>
+          {user && (
+            <Link
+              to="/history"
+              className="mobile-nav__link"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Quiz History
+            </Link>
+          )}
           <a
             className="mobile-nav__link"
             onClick={() => handleSectionClick('playground')}

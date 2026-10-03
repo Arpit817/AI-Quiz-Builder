@@ -52,5 +52,7 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ answers }),
       }),
+
+    history: () => request('/quiz/history'),
   },
 };

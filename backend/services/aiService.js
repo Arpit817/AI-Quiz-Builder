@@ -28,7 +28,8 @@ STRICT REQUIREMENTS:
 3. "correctAnswerIndex" MUST be an integer between 0 and 3 matching the correct option in the "options" array.
 4. Distribute the correct answer index across 0, 1, 2, and 3 across the questions to avoid positional bias.
 5. "difficulty" on each question must be "${difficulty.toLowerCase()}".
-6. Return ONLY a single raw JSON object adhering to this exact schema, with NO markdown backticks, no comments, and no explanation text:
+6. "explanation" MUST be a clear, helpful 1-2 sentence explanation clarifying why the correct option is right.
+7. Return ONLY a single raw JSON object adhering to this exact schema, with NO markdown backticks, no comments, and no explanation text:
 
 {
   "topic": "${topic}",
@@ -43,7 +44,8 @@ STRICT REQUIREMENTS:
         "Option 3"
       ],
       "correctAnswerIndex": 0,
-      "difficulty": "${difficulty.toLowerCase()}"
+      "difficulty": "${difficulty.toLowerCase()}",
+      "explanation": "Brief explanation of why the correct option is right."
     }
   ]
 }`;

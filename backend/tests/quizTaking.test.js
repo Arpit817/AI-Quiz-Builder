@@ -255,4 +255,57 @@ test.describe('Quiz-Taking API (Item 3)', () => {
       assert.strictEqual(breakdown[2].isCorrect, false);
     });
   });
+
+  test('GET /api/quiz/history', async (t) => {
+    await t.test('returns 401 when no token is provided', async () => {
+      const { status, data } = await makeRequest('/api/quiz/history');
+      assert.strictEqual(status, 401);
+      assert.strictEqual(data.success, false);
+    });
+
+    await t.test('returns user attempts array when authenticated', async () => {
+      const jwt = require('jsonwebtoken');
+      const User = require('../models/User');
+
+      const testUser = await User.create({
+        username: 'historyuser',
+        email: `history_${Date.now()}@historyquiz.test`,
+        password: 'Password123!',
+      });
+
+      const token = jwt.sign({ id: testUser._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+      // Create an attempt linked to this user
+      await Attempt.create({
+        quizId: createdQuiz._id,
+        userId: testUser._id,
+        score: 3,
+        totalQuestions: 3,
+        answers: [
+          { questionIndex: 0, selectedOptionIndex: 2, isCorrect: true },
+          { questionIndex: 1, selectedOptionIndex: 1, isCorrect: true },
+          { questionIndex: 2, selectedOptionIndex: 1, isCorrect: true },
+        ],
+      });
+
+      const { status, data } = await makeRequest('/api/quiz/history', {
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+      });
+
+      assert.strictEqual(status, 200);
+      assert.strictEqual(data.success, true);
+      assert.ok(Array.isArray(data.data));
+      assert.ok(data.data.length >= 1);
+      const first = data.data[0];
+      assert.strictEqual(first.topic, createdQuiz.topic);
+      assert.strictEqual(first.score, 3);
+      assert.strictEqual(first.percentage, 100);
+      assert.ok(first.breakdown, 'Should include breakdown for review');
+
+      await User.deleteOne({ _id: testUser._id });
+    });
+  });
 });
+

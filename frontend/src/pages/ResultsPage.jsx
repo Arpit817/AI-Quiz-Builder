@@ -1,5 +1,5 @@
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { Check, X, RotateCcw, Plus, Info, AlertCircle } from 'lucide-react';
+import { Check, X, RotateCcw, Plus, Info, AlertCircle, History } from 'lucide-react';
 
 const LABELS = ['A', 'B', 'C', 'D'];
 
@@ -74,6 +74,10 @@ export default function ResultsPage() {
           <Link to="/generate" className="btn btn--primary">
             <Plus size={14} />
             <span>Try another topic</span>
+          </Link>
+          <Link to="/history" className="btn btn--secondary">
+            <History size={14} />
+            <span>Quiz history</span>
           </Link>
         </div>
 

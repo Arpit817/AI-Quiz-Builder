@@ -310,8 +310,84 @@ const submitQuiz = async (req, res) => {
   }
 };
 
+/**
+ * Controller for retrieving the authenticated user's attempt history.
+ * 
+ * Route: GET /api/quiz/history
+ */
+const getQuizHistory = async (req, res) => {
+  try {
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required to view quiz history.',
+      });
+    }
+
+    if (mongoose.connection.readyState !== 1) {
+      const connectDB = require('../config/db');
+      await connectDB();
+    }
+
+    const attempts = await Attempt.find({ userId: req.user._id })
+      .populate('quizId', 'title topic difficulty questions')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const formattedHistory = attempts.map((att) => {
+      const quiz = att.quizId;
+      const total = att.totalQuestions || (att.answers ? att.answers.length : 0);
+      const percentage = total > 0 ? Math.round((att.score / total) * 100) : 0;
+
+      let breakdown = null;
+      if (quiz && Array.isArray(quiz.questions)) {
+        breakdown = quiz.questions.map((q, idx) => {
+          const ans = (att.answers || []).find((a) => a.questionIndex === idx);
+          const selectedOptionIndex = ans ? ans.selectedOptionIndex : -1;
+          const isCorrect = ans ? ans.isCorrect : false;
+          return {
+            questionIndex: idx,
+            questionId: q._id,
+            questionText: q.questionText,
+            options: q.options,
+            selectedOptionIndex,
+            correctAnswerIndex: q.correctAnswerIndex,
+            isCorrect,
+            explanation: q.explanation || '',
+          };
+        });
+      }
+
+      return {
+        _id: att._id,
+        quizId: quiz ? quiz._id : null,
+        topic: quiz?.topic || quiz?.title || 'Practice Quiz',
+        difficulty: quiz?.difficulty || 'medium',
+        score: att.score,
+        totalQuestions: total,
+        percentage,
+        createdAt: att.createdAt,
+        breakdown,
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: formattedHistory,
+    });
+  } catch (error) {
+    console.error('Get Quiz History Error:', error.message);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to fetch quiz history',
+      details: error.message,
+    });
+  }
+};
+
 module.exports = {
   generateQuiz,
   getQuizById,
   submitQuiz,
+  getQuizHistory,
 };
