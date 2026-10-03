@@ -17,7 +17,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Health Check Endpoint
-app.get('/api/health', (req, res) => {
+app.get(['/api/health', '/health'], (req, res) => {
   res.status(200).json({
     status: 'ok',
     message: 'AI Quiz Builder API is running',
@@ -25,9 +25,12 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Routes
+// Routes (support both /api and stripped path)
 app.use('/api/auth', authRoutes);
+app.use('/auth', authRoutes);
+
 app.use('/api/quiz', quizRoutes);
+app.use('/quiz', quizRoutes);
 
 // Catch-all 404 handler
 app.use((req, res) => {
